@@ -1,5 +1,6 @@
 package org.wxd.excel.handler.export;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.poi.ss.usermodel.*;
 import org.wxd.excel.annotation.ExcelCellStyle;
@@ -16,14 +17,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @Description: 默认导出处理器
- * @Copyright: Copyright 2012 ShenZhen DSE Corporation
- * @Company: 深圳市东深电子股份有限公司
- * @Author : wangxd
- * @Date: 2016-5-10
- * @Version 1.0
+ * 多线程处理
+ * Created by wangxd on 16/5/10.
  */
-public class DefaultExportHandler implements ExcelHandler {
+public class DefaultExportSyncHandler implements ExcelHandler {
     /**
      * 获取但单元格值
      * @param cell
@@ -75,13 +72,16 @@ public class DefaultExportHandler implements ExcelHandler {
         }
         return cellValue;
     }
+
+
     @SuppressWarnings("Duplicates")
-    @Override
-    public Workbook handlerWorkbook(Workbook workbook, ExcelContent content,Object custom) {
+    public Workbook handlerWorkbook(Workbook workbook, ExcelContent content, Object custom) {
 
         List<String> sheetTitles = (List<String>) custom;
         List<ExcelTemplate> excelTemplates = content.templates();
         List<ExcelTemplateParam> excelTemplateParams = content.params();
+
+
 
         Sheet sheet = null;
         Row row = null;
@@ -143,16 +143,77 @@ public class DefaultExportHandler implements ExcelHandler {
             }
         }
 
-        Map<String, Integer> hasDealIndexMap = Maps.newHashMap();
-        long start = System.currentTimeMillis();
-        System.out.println("start:" + System.currentTimeMillis());
+//        Map<String, Integer> hasDealIndexMap = Maps.newHashMap();
+
+        List<ExportHandlerRunnable> runnables = Lists.newArrayList();
         for (String sheetTitle : sheetTitles) {
+
+            ExportHandlerRunnable exportHandlerRunnable = new ExportHandlerRunnable();
+            exportHandlerRunnable.workbook = workbook;
+            exportHandlerRunnable.excelTemplates = excelTemplates;
+            exportHandlerRunnable.sheetTitle = sheetTitle;
+            runnables.add(exportHandlerRunnable);
+            new Thread(exportHandlerRunnable).start();
+        }
+        long start = System.currentTimeMillis();
+        System.out.println("start deal:" + start);
+        while(true){
+            boolean isDone = true;
+            for (ExportHandlerRunnable runnable : runnables) {
+//                System.out.println("isFinish" + runnable.hasFinish);
+                if(!runnable.hasFinish){
+                    isDone = false;
+                    break;
+                }
+            }
+            if(isDone){
+                break;
+            }else{
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        System.out.println("finish deal:" + System.currentTimeMillis());
+        System.out.println("allTime:" + (System.currentTimeMillis() - start));
+        /*删除没有数据的sheet*/
+       /* if(!isNeedToRemoveSheet.isEmpty()){
+            for(int i = 0,len = workbook.getNumberOfSheets(); i < len; i++){
+                String sheetName = workbook.getSheetAt(i).getSheetName();
+                if(isNeedToRemoveSheet.get(sheetName) != null && isNeedToRemoveSheet.get(sheetName)){
+                    workbook.removeSheetAt(i);
+                    len = workbook.getNumberOfSheets();
+                    i --;
+                }
+            }
+        }*/
+
+        return workbook;
+    }
+
+    public static class ExportHandlerRunnable implements Runnable{
+
+        private  List<ExcelTemplate> excelTemplates;
+        private String sheetTitle;
+        private Workbook workbook;
+        private boolean hasFinish = false;
+
+        @SuppressWarnings("Duplicates")
+        public void run() {
+            Sheet sheet;
+            Row row;
+            Cell cell;
+            CellStyle style = workbook.createCellStyle();
+            Map<String, Integer> hasDealIndexMap = Maps.newHashMap();
             for (ExcelTemplate excelTemplate : excelTemplates) {
                 if (excelTemplate.sheetTitle() == null || !sheetTitle.equals(excelTemplate.sheetTitle())) continue;
                 Integer currentIndex = hasDealIndexMap.get(excelTemplate.sheetTitle()) == null ? excelTemplate.beginWriteRowIndex() : hasDealIndexMap.get(excelTemplate.sheetTitle());
                 sheet = workbook.getSheet(excelTemplate.sheetTitle());
+//                System.out.println("myTitle:" + sheetTitle);
 
-                sheet.shiftRows(currentIndex, sheet.getLastRowNum(), 1, true, false);
+//                sheet.shiftRows(currentIndex, sheet.getLastRowNum(), 1, true, false);
                 row = sheet.createRow(currentIndex);
                 row.setHeight((short) (20 * 18));
                 for (Map.Entry<Integer, CellInfo> entry : excelTemplate.orderCellMap().entrySet()) {
@@ -183,24 +244,9 @@ public class DefaultExportHandler implements ExcelHandler {
                 }
                 hasDealIndexMap.put(excelTemplate.sheetTitle(), ++currentIndex);
             }
+            hasFinish = true;
+
         }
-
-        System.out.println("finish:" + (System.currentTimeMillis() - start));
-
-
-        /*删除没有数据的sheet*/
-       /* if(!isNeedToRemoveSheet.isEmpty()){
-            for(int i = 0,len = workbook.getNumberOfSheets(); i < len; i++){
-                String sheetName = workbook.getSheetAt(i).getSheetName();
-                if(isNeedToRemoveSheet.get(sheetName) != null && isNeedToRemoveSheet.get(sheetName)){
-                    workbook.removeSheetAt(i);
-                    len = workbook.getNumberOfSheets();
-                    i --;
-                }
-            }
-        }*/
-
-        return workbook;
     }
 
 }

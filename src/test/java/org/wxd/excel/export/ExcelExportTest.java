@@ -6,6 +6,7 @@ import com.google.common.io.Files;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.junit.Test;
 import org.wxd.excel.handler.export.DefaultExportHandler;
+import org.wxd.excel.handler.export.DefaultExportSyncHandler;
 import org.wxd.excel.model.Clazz;
 import org.wxd.excel.model.ExcelDTO;
 import org.wxd.excel.model.Student;
@@ -30,7 +31,7 @@ public class ExcelExportTest {
     private static String excelFileName = "stu_tea_test.xlsx";
     private static String exportResultFileName = "stu_tea_test_result.xlsx";
     private static ExcelDTO excelDTO = new ExcelDTO();
-    private static Integer entityNum = 100;
+    private static Integer entityNum = 10000;
     private static List<String> sheetTitles = Lists.newArrayList("stu","tea");
 
     @Test
@@ -48,7 +49,7 @@ public class ExcelExportTest {
                     excelDTO,
                     sheetTitles,
                     tempFile,
-                    new DefaultExportHandler()
+                    new DefaultExportSyncHandler()
             );
             workbook.write(out);
             workbook.close();
