@@ -11,6 +11,7 @@ import org.wxd.excel.annotation.ExcelCellStyle;
  */
 public class CellInfo {
     private Object value;/*单元格值*/
+    private Object fieldType;/*单元格类型*/
     private Integer order;/*序号*/
     private ExcelCellStyle[] styles;/*样式*/
 
@@ -18,6 +19,7 @@ public class CellInfo {
     CellInfo(Builder builder) {
         this.value = builder.value;
         this.order = builder.order;
+        this.fieldType = builder.fieldType;
         this.styles = builder.styles;
     }
 
@@ -27,6 +29,7 @@ public class CellInfo {
 
     public static class Builder{
         Object value;/*单元格值*/
+        Object fieldType;/*单元格类型*/
         Integer order;/*序号*/
         ExcelCellStyle[] styles;/*样式*/
 
@@ -48,6 +51,11 @@ public class CellInfo {
             this.styles = styles;
             return this;
         }
+
+        public Builder fieldType(Object fieldType) {
+            this.fieldType = fieldType;
+            return this;
+        }
     }
 
     public Object value() {
@@ -61,4 +69,8 @@ public class CellInfo {
     public ExcelCellStyle[] styles() {
         return styles;
     }
+    public Object fieldType() {
+        return fieldType;
+    }
+
 }

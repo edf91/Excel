@@ -8,8 +8,8 @@ import org.wxd.excel.bean.ExcelRepository;
 import org.wxd.excel.bean.ExcelTemplate;
 import org.wxd.excel.bean.ExcelTemplateParam;
 import org.wxd.excel.exception.ExcelException;
-import org.wxd.excel.handler.EntityHandlerExecutor;
-import org.wxd.excel.handler.ExcelHandlerExecutor;
+import org.wxd.excel.handler.inport.EntityHandlerExecutor;
+import org.wxd.excel.handler.inport.ExcelHandlerExecutor;
 
 import java.io.File;
 import java.lang.reflect.Field;
