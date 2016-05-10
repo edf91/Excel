@@ -31,7 +31,7 @@ public class ExcelExportTest {
     private static String excelFileName = "stu_tea_test.xlsx";
     private static String exportResultFileName = "stu_tea_test_result.xlsx";
     private static ExcelDTO excelDTO = new ExcelDTO();
-    private static Integer entityNum = 10000;
+    private static Integer entityNum = 1000;
     private static List<String> sheetTitles = Lists.newArrayList("stu","tea");
 
     @Test
