@@ -3,10 +3,7 @@ package org.wxd.excel.utils;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.wxd.excel.annotation.Excel;
-import org.wxd.excel.bean.ExcelContent;
-import org.wxd.excel.bean.ExcelRepository;
-import org.wxd.excel.bean.ExcelTemplate;
-import org.wxd.excel.bean.ExcelTemplateParam;
+import org.wxd.excel.bean.*;
 import org.wxd.excel.exception.ExcelException;
 import org.wxd.excel.handler.inport.EntityHandlerExecutor;
 import org.wxd.excel.handler.inport.ExcelHandlerExecutor;
@@ -57,7 +54,8 @@ public class ExportFatory {
      */
     public static ExcelContent buildExcelContent(Object src){
         Assert.notNull(src, "src can not be null.");
-        ExcelContent content = ExcelContent.newBuilder().build();
+        ExcelContent.Builder contentBuildr = ExcelContent.newBuilder();
+
         try{
             Field[] fields = src.getClass().getDeclaredFields();
             for (Field field : fields) {
@@ -74,12 +72,14 @@ public class ExportFatory {
                         ExcelRepository excelRepository = ExcelRepository.newBuilder().read(targetObj).build();
                         ExcelTemplate excelTemplate = ExcelTemplate.newBuilder().readExcelRepository(excelRepository).build();
                         ExcelTemplateParam excelTemplateParam = ExcelTemplateParam.newBuilder().readExcelRepository(excelRepository).build();
-                        content.templates().add(excelTemplate);
-                        content.params().add(excelTemplateParam);
+                        ExcelTemplateFormula excelTemplateFormula = ExcelTemplateFormula.newBuilder().readExcelRepository(excelRepository).build();
+                        contentBuildr.addTemplate(excelTemplate);
+                        contentBuildr.addParam(excelTemplateParam);
+                        contentBuildr.addFormula(excelTemplateFormula);
                     }
                 }
             }
-            return content;
+            return contentBuildr.build();
         }catch (Exception e){
             throw new ExcelException("src transfore input ExcelContent error.",e);
         }

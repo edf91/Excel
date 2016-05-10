@@ -83,6 +83,7 @@ public class ExcelTemplate {
                             excelCell.order(),
                             CellInfo.newBuilder()
                                     .order(excelCell.order()).styles(excelCell.style()).value(field.get(target))
+                                    .fieldType(field.getType())
                                     .build()
                     );
                 }

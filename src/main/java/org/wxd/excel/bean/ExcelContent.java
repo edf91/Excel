@@ -12,12 +12,15 @@ import java.util.List;
  */
 public class ExcelContent{
 
-    private List<ExcelTemplate> templates = Lists.newArrayList();/*存放类上的ExcelCell注解*/
-    private List<ExcelTemplateParam> params = Lists.newArrayList();/*存放类上的ExcelParam注解*/
+    private List<ExcelTemplate> templates;/*存放类上的ExcelCell注解*/
+    private List<ExcelTemplateParam> params;/*存放类上的ExcelParam注解*/
+    private List<ExcelTemplateFormula> formulas;/*存放类上的ExcelFormula注解*/
+
 
     ExcelContent(Builder builder) {
         this.templates = builder.templates;
-        this.templates = builder.templates;
+        this.params = builder.params;
+        this.formulas = builder.formulas;
     }
 
     public static Builder newBuilder(){
@@ -27,21 +30,30 @@ public class ExcelContent{
     public static class Builder{
         List<ExcelTemplate> templates = Lists.newArrayList();/*存放类上的ExcelCell注解*/
         List<ExcelTemplateParam> params = Lists.newArrayList();/*存放类上的ExcelParam注解*/
-
-        public Builder templates(List<ExcelTemplate> templates) {
-            this.templates = templates;
-            return this;
-        }
-
-        public Builder params(List<ExcelTemplateParam> params) {
-            this.params = params;
-            return this;
-        }
+        List<ExcelTemplateFormula> formulas = Lists.newArrayList();/*存放类上的ExcelFormula注解*/
 
         public ExcelContent build(){
             return new ExcelContent(this);
         }
 
+        public Builder addTemplate(ExcelTemplate template) {
+            this.templates.add(template);
+            return this;
+        }
+
+        public Builder addParam(ExcelTemplateParam param) {
+            this.params.add(param);
+            return this;
+        }
+
+        public Builder addFormula(ExcelTemplateFormula formula) {
+            this.formulas.add(formula);
+            return this;
+        }
+    }
+
+    public List<ExcelTemplateFormula> formulas() {
+        return formulas;
     }
 
     public List<ExcelTemplate> templates() {
