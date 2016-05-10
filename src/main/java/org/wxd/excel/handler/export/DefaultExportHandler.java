@@ -24,6 +24,11 @@ import java.util.Map;
  * @Version 1.0
  */
 public class DefaultExportHandler implements ExcelHandler {
+    /**
+     * 获取但单元格值
+     * @param cell
+     * @return
+     */
     public Object getCellValue(Cell cell){
         Object cellValue = null;
         switch (cell.getCellType()) {
@@ -97,7 +102,7 @@ public class DefaultExportHandler implements ExcelHandler {
 
 
 
-            /*处理参数*/
+        /*处理参数*/
         for (ExcelTemplateParam excelTemplateParam : excelTemplateParams) {
             if(excelTemplateParam.sheetTitle() == null || "".equals(excelTemplateParam.sheetTitle())) continue;
             sheet = workbook.getSheet(excelTemplateParam.sheetTitle());
@@ -137,42 +142,48 @@ public class DefaultExportHandler implements ExcelHandler {
         }
 
         Map<String, Integer> hasDealIndexMap = Maps.newHashMap();
-        for (ExcelTemplate excelTemplate : excelTemplates) {
-            if (excelTemplate.sheetTitle() == null) continue;
-            Integer currentIndex = hasDealIndexMap.get(excelTemplate.sheetTitle()) == null ? excelTemplate.beginWriteRowIndex() : hasDealIndexMap.get(excelTemplate.sheetTitle());
-            sheet = workbook.getSheet(excelTemplate.sheetTitle());
 
-            sheet.shiftRows(currentIndex, sheet.getLastRowNum(), 1, true, false);
-            row = sheet.createRow(currentIndex);
-            row.setHeight((short) (20 * 18));
-            for (Map.Entry<Integer, CellInfo> entry : excelTemplate.orderCellMap().entrySet()) {
-                CellInfo cellInfo = entry.getValue();
-                String cellValue = cellInfo.value() == null ? "" : cellInfo.value().toString();
-                if (cellInfo.order() == -1) continue;
-                cell = row.createCell(cellInfo.order());
-                if(cellInfo.fieldType().toString().equals("class java.math.BigDecimal")){
-                    cell.setCellValue(new BigDecimal(cellValue.equals("") ?  "0" : cellValue).doubleValue());
-                }else if(cellInfo.fieldType().toString().equals("class java.lang.Integer")){
-                    cell.setCellValue(new BigDecimal(cellValue.equals("") ?  "0" : cellValue).intValue());
-                }else{
-                    cell.setCellValue(cellValue);
-                }
-                if (cellInfo.styles() == null) continue;
-                for (ExcelCellStyle excelCellStyle : cellInfo.styles()) {
-                    if (excelCellStyle.equals(ExcelCellStyle.BORDER_ALL)) {
-                        style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
-                        style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
-                        style.setBorderTop(CellStyle.BORDER_THIN);//上边框
-                        style.setBorderRight(CellStyle.BORDER_THIN);//右边框
+
+        for (String sheetTitle : sheetTitles) {
+            for (ExcelTemplate excelTemplate : excelTemplates) {
+                if (excelTemplate.sheetTitle() == null || !sheetTitle.equals(excelTemplate.sheetTitle())) continue;
+                Integer currentIndex = hasDealIndexMap.get(excelTemplate.sheetTitle()) == null ? excelTemplate.beginWriteRowIndex() : hasDealIndexMap.get(excelTemplate.sheetTitle());
+                sheet = workbook.getSheet(excelTemplate.sheetTitle());
+
+                sheet.shiftRows(currentIndex, sheet.getLastRowNum(), 1, true, false);
+                row = sheet.createRow(currentIndex);
+                row.setHeight((short) (20 * 18));
+                for (Map.Entry<Integer, CellInfo> entry : excelTemplate.orderCellMap().entrySet()) {
+                    CellInfo cellInfo = entry.getValue();
+                    String cellValue = cellInfo.value() == null ? "" : cellInfo.value().toString();
+                    if (cellInfo.order() == -1) continue;
+                    cell = row.createCell(cellInfo.order());
+                    if(cellInfo.fieldType().toString().equals("class java.math.BigDecimal")){
+                        cell.setCellValue(new BigDecimal(cellValue.equals("") ?  "0" : cellValue).doubleValue());
+                    }else if(cellInfo.fieldType().toString().equals("class java.lang.Integer")){
+                        cell.setCellValue(new BigDecimal(cellValue.equals("") ?  "0" : cellValue).intValue());
+                    }else{
+                        cell.setCellValue(cellValue);
                     }
-                    if (excelCellStyle.equals(ExcelCellStyle.ALIGN_CENTER)) {
-                        style.setAlignment(CellStyle.ALIGN_CENTER);
+                    if (cellInfo.styles() == null) continue;
+                    for (ExcelCellStyle excelCellStyle : cellInfo.styles()) {
+                        if (excelCellStyle.equals(ExcelCellStyle.BORDER_ALL)) {
+                            style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
+                            style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
+                            style.setBorderTop(CellStyle.BORDER_THIN);//上边框
+                            style.setBorderRight(CellStyle.BORDER_THIN);//右边框
+                        }
+                        if (excelCellStyle.equals(ExcelCellStyle.ALIGN_CENTER)) {
+                            style.setAlignment(CellStyle.ALIGN_CENTER);
+                        }
                     }
+                    cell.setCellStyle(style);
                 }
-                cell.setCellStyle(style);
+                hasDealIndexMap.put(excelTemplate.sheetTitle(), ++currentIndex);
             }
-            hasDealIndexMap.put(excelTemplate.sheetTitle(), ++currentIndex);
         }
+
+
 
         /*删除没有数据的sheet*/
        /* if(!isNeedToRemoveSheet.isEmpty()){
@@ -188,4 +199,5 @@ public class DefaultExportHandler implements ExcelHandler {
 
         return workbook;
     }
+
 }
