@@ -27,7 +27,7 @@ public class DefaultExportSyncHandler implements ExcelHandler {
      * @return
      */
     @SuppressWarnings("Duplicates")
-    public Object getCellValue(Cell cell){
+    public static Object getCellValue(Cell cell){
         Object cellValue = null;
         switch (cell.getCellType()) {
             case Cell.CELL_TYPE_FORMULA:
@@ -101,57 +101,15 @@ public class DefaultExportSyncHandler implements ExcelHandler {
             isNeedToRemoveSheet.put(sheetName,Boolean.TRUE);
         }
 
-
-
-
-        /*处理参数*/
-        for (ExcelTemplateParam excelTemplateParam : excelTemplateParams) {
-            if(excelTemplateParam.sheetTitle() == null || "".equals(excelTemplateParam.sheetTitle())) continue;
-            sheet = workbook.getSheet(excelTemplateParam.sheetTitle());
-            isNeedToRemoveSheet.remove(excelTemplateParam.sheetTitle());
-                /*处理参数*/
-            for (int index = sheet.getFirstRowNum(); index <= sheet.getLastRowNum(); index++) {
-                row = sheet.getRow(index);
-                for (int cellIndex = row.getFirstCellNum(); cellIndex <= row.getLastCellNum(); cellIndex++) {
-                    if (cellIndex < 0) break;
-                    cell = row.getCell(cellIndex);
-                    if (cell == null) continue;
-                    Object objValue = getCellValue(cell);
-                    String value = objValue == null ? "" : objValue.toString();
-                    if (!value.contains("${")) continue;
-                    int valueLength = value.length();
-                    int subLength = 0;
-                    for (int i = value.indexOf("$"); i < valueLength; i++) {
-                        if (value.charAt(i) != '$') continue;
-                        int begIndex = i;
-                        for (int j = i; j < valueLength; j++) {
-                            i++;
-                            if (value.charAt(j) != '}') continue;
-                            String paramName = value.substring(begIndex + 2, j);
-                            String paramValue = excelTemplateParam.params().get(paramName) == null ? "" : excelTemplateParam.params().get(paramName).toString(); //excelTemplate.params().get(paramName) == null ? "" : excelTemplate.params().get(paramName).toString();
-
-                            value = value.replace("${" + paramName + "}", paramValue);
-                            subLength = Math.abs(value.length() - valueLength);
-                            valueLength = value.length();
-                            i = Math.abs(i - subLength);
-                            break;
-                        }
-                        if (i == valueLength || i > valueLength) break;
-                    }
-                    cell.setCellValue(value);
-                }
-            }
-        }
-
-//        Map<String, Integer> hasDealIndexMap = Maps.newHashMap();
-
         List<ExportHandlerRunnable> runnables = Lists.newArrayList();
         for (String sheetTitle : sheetTitles) {
 
             ExportHandlerRunnable exportHandlerRunnable = new ExportHandlerRunnable();
+            exportHandlerRunnable.excelTemplateParams = excelTemplateParams;
             exportHandlerRunnable.workbook = workbook;
             exportHandlerRunnable.excelTemplates = excelTemplates;
             exportHandlerRunnable.sheetTitle = sheetTitle;
+            exportHandlerRunnable.isNeedToRemoveSheet = isNeedToRemoveSheet;
             runnables.add(exportHandlerRunnable);
             new Thread(exportHandlerRunnable).start();
         }
@@ -196,6 +154,8 @@ public class DefaultExportSyncHandler implements ExcelHandler {
     public static class ExportHandlerRunnable implements Runnable{
 
         private  List<ExcelTemplate> excelTemplates;
+        List<ExcelTemplateParam> excelTemplateParams;
+        Map<String,Boolean> isNeedToRemoveSheet;
         private String sheetTitle;
         private Workbook workbook;
         private boolean hasFinish = false;
@@ -206,6 +166,46 @@ public class DefaultExportSyncHandler implements ExcelHandler {
             Row row;
             Cell cell;
             CellStyle style = workbook.createCellStyle();
+
+            /*处理参数*/
+            for (ExcelTemplateParam excelTemplateParam : excelTemplateParams) {
+                if(excelTemplateParam.sheetTitle() == null || !sheetTitle.equals(excelTemplateParam.sheetTitle()) || "".equals(excelTemplateParam.sheetTitle())) continue;
+                sheet = workbook.getSheet(excelTemplateParam.sheetTitle());
+                isNeedToRemoveSheet.remove(excelTemplateParam.sheetTitle());
+                /*处理参数*/
+                for (int index = sheet.getFirstRowNum(); index <= sheet.getLastRowNum(); index++) {
+                    row = sheet.getRow(index);
+                    for (int cellIndex = row.getFirstCellNum(); cellIndex <= row.getLastCellNum(); cellIndex++) {
+                        if (cellIndex < 0) break;
+                        cell = row.getCell(cellIndex);
+                        if (cell == null) continue;
+                        Object objValue = getCellValue(cell);
+                        String value = objValue == null ? "" : objValue.toString();
+                        if (!value.contains("${")) continue;
+                        int valueLength = value.length();
+                        int subLength = 0;
+                        for (int i = value.indexOf("$"); i < valueLength; i++) {
+                            if (value.charAt(i) != '$') continue;
+                            int begIndex = i;
+                            for (int j = i; j < valueLength; j++) {
+                                i++;
+                                if (value.charAt(j) != '}') continue;
+                                String paramName = value.substring(begIndex + 2, j);
+                                String paramValue = excelTemplateParam.params().get(paramName) == null ? "" : excelTemplateParam.params().get(paramName).toString(); //excelTemplate.params().get(paramName) == null ? "" : excelTemplate.params().get(paramName).toString();
+
+                                value = value.replace("${" + paramName + "}", paramValue);
+                                subLength = Math.abs(value.length() - valueLength);
+                                valueLength = value.length();
+                                i = Math.abs(i - subLength);
+                                break;
+                            }
+                            if (i == valueLength || i > valueLength) break;
+                        }
+                        cell.setCellValue(value);
+                    }
+                }
+            }
+            /*处理内容*/
             Map<String, Integer> hasDealIndexMap = Maps.newHashMap();
             for (ExcelTemplate excelTemplate : excelTemplates) {
                 if (excelTemplate.sheetTitle() == null || !sheetTitle.equals(excelTemplate.sheetTitle())) continue;
