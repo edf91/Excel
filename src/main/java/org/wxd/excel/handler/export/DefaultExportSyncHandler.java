@@ -3,7 +3,6 @@ package org.wxd.excel.handler.export;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.poi.ss.usermodel.*;
-import org.wxd.excel.annotation.ExcelCellStyle;
 import org.wxd.excel.bean.CellInfo;
 import org.wxd.excel.bean.ExcelContent;
 import org.wxd.excel.bean.ExcelTemplate;
@@ -41,6 +40,12 @@ public class DefaultExportSyncHandler implements ExcelHandler {
             }
             isNeedToRemoveSheet.put(sheetName, Boolean.TRUE);
         }
+        CellStyle style = workbook.createCellStyle();
+        style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
+        style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
+        style.setBorderTop(CellStyle.BORDER_THIN);//上边框
+        style.setBorderRight(CellStyle.BORDER_THIN);//右边框
+        style.setAlignment(CellStyle.ALIGN_CENTER);
         /**
          * 采用多线程进行处理,一个sheet一条线程
          */
@@ -52,6 +57,7 @@ public class DefaultExportSyncHandler implements ExcelHandler {
             exportHandlerRunnable.excelTemplates = excelTemplates;
             exportHandlerRunnable.sheetTitle = sheetTitle;
             exportHandlerRunnable.isNeedToRemoveSheet = isNeedToRemoveSheet;
+            exportHandlerRunnable.style = style;
             runnables.add(exportHandlerRunnable);
             new Thread(exportHandlerRunnable).start();
         }
@@ -94,6 +100,7 @@ public class DefaultExportSyncHandler implements ExcelHandler {
         private Sheet sheet;
         private Row row;
         private Cell cell;
+        private CellStyle style;
         private boolean hasFinish = false;
 
         @SuppressWarnings("Duplicates")
@@ -105,8 +112,10 @@ public class DefaultExportSyncHandler implements ExcelHandler {
                 sheet = workbook.getSheet(excelTemplateParam.sheetTitle());
                 isNeedToRemoveSheet.remove(excelTemplateParam.sheetTitle());
                 /*处理参数*/
+                if(sheet == null) return ;
                 for (int index = sheet.getFirstRowNum(); index <= sheet.getLastRowNum(); index++) {
                     row = sheet.getRow(index);
+                    if(row == null) return;
                     for (int cellIndex = row.getFirstCellNum(); cellIndex <= row.getLastCellNum(); cellIndex++) {
                         if (cellIndex < 0) break;
                         cell = row.getCell(cellIndex);
@@ -141,7 +150,7 @@ public class DefaultExportSyncHandler implements ExcelHandler {
 
         @SuppressWarnings("Duplicates")
         private void dealContent(){
-            CellStyle style = workbook.createCellStyle();
+
             Map<String, Integer> hasDealIndexMap = Maps.newHashMap();
             for (ExcelTemplate excelTemplate : excelTemplates) {
                 if (excelTemplate.sheetTitle() == null || !sheetTitle.equals(excelTemplate.sheetTitle())) continue;
@@ -162,17 +171,17 @@ public class DefaultExportSyncHandler implements ExcelHandler {
                         cell.setCellValue(cellValue);
                     }
                     if (cellInfo.styles() == null) continue;
-                    for (ExcelCellStyle excelCellStyle : cellInfo.styles()) {
-                        if (excelCellStyle.equals(ExcelCellStyle.BORDER_ALL)) {
-                            style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
-                            style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
-                            style.setBorderTop(CellStyle.BORDER_THIN);//上边框
-                            style.setBorderRight(CellStyle.BORDER_THIN);//右边框
-                        }
-                        if (excelCellStyle.equals(ExcelCellStyle.ALIGN_CENTER)) {
-                            style.setAlignment(CellStyle.ALIGN_CENTER);
-                        }
-                    }
+//                    for (ExcelCellStyle excelCellStyle : cellInfo.styles()) {
+//                        if (excelCellStyle.equals(ExcelCellStyle.BORDER_ALL)) {
+//                            style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
+//                            style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
+//                            style.setBorderTop(CellStyle.BORDER_THIN);//上边框
+//                            style.setBorderRight(CellStyle.BORDER_THIN);//右边框
+//                        }
+//                        if (excelCellStyle.equals(ExcelCellStyle.ALIGN_CENTER)) {
+//                            style.setAlignment(CellStyle.ALIGN_CENTER);
+//                        }
+//                    }
                     cell.setCellStyle(style);
                 }
                 hasDealIndexMap.put(excelTemplate.sheetTitle(), ++currentIndex);
@@ -186,6 +195,7 @@ public class DefaultExportSyncHandler implements ExcelHandler {
             Assert.notNull(isNeedToRemoveSheet,"isNeedToRemoveSheet cant be null");
             Assert.notNull(sheetTitle,"sheetTitle cant be null");
             Assert.notNull(workbook,"workbook cant be null");
+            Assert.notNull(style,"style cant be null");
             /* 处理参数*/
             dealParam();
             /*处理内容*/

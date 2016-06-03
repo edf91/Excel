@@ -2,6 +2,8 @@ package org.wxd.excel.utils;
 
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.wxd.excel.annotation.Excel;
 import org.wxd.excel.bean.*;
 import org.wxd.excel.exception.ExcelException;
@@ -32,6 +34,23 @@ public class ExportFatory {
             throw new ExcelException(e.getMessage(), e);
         }
     }
+
+    public static Workbook buildWorkbookOfTemplateWithSXSSFWorkbook(File excelFile) {
+        try {
+            return new SXSSFWorkbook((XSSFWorkbook)WorkbookFactory.create(excelFile));
+        } catch (Exception e) {
+            throw new ExcelException(e.getMessage(), e);
+        }
+    }
+
+    public static Workbook buildWorkbookOfTemplateWithSXSSFWorkbook(File excelFile,int flushNum) {
+        try {
+            return new SXSSFWorkbook((XSSFWorkbook)WorkbookFactory.create(excelFile),flushNum);
+        } catch (Exception e) {
+            throw new ExcelException(e.getMessage(), e);
+        }
+    }
+
     /**
      *创建excel处理注册器
      * @return

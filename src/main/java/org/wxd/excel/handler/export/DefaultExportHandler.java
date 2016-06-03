@@ -2,7 +2,6 @@ package org.wxd.excel.handler.export;
 
 import com.google.common.collect.Maps;
 import org.apache.poi.ss.usermodel.*;
-import org.wxd.excel.annotation.ExcelCellStyle;
 import org.wxd.excel.bean.CellInfo;
 import org.wxd.excel.bean.ExcelContent;
 import org.wxd.excel.bean.ExcelTemplate;
@@ -86,6 +85,11 @@ public class DefaultExportHandler implements ExcelHandler {
         Row row = null;
         Cell cell = null;
         CellStyle style = workbook.createCellStyle();
+        style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
+        style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
+        style.setBorderTop(CellStyle.BORDER_THIN);//上边框
+        style.setBorderRight(CellStyle.BORDER_THIN);//右边框
+        style.setAlignment(CellStyle.ALIGN_CENTER);
 
         Map<String,Boolean> isNeedToRemoveSheet = Maps.newHashMap();
         /*移除不必要的sheet*/
@@ -109,8 +113,10 @@ public class DefaultExportHandler implements ExcelHandler {
             sheet = workbook.getSheet(excelTemplateParam.sheetTitle());
             isNeedToRemoveSheet.remove(excelTemplateParam.sheetTitle());
                 /*处理参数*/
+            if(sheet == null) break;
             for (int index = sheet.getFirstRowNum(); index <= sheet.getLastRowNum(); index++) {
                 row = sheet.getRow(index);
+                if(row == null) break;
                 for (int cellIndex = row.getFirstCellNum(); cellIndex <= row.getLastCellNum(); cellIndex++) {
                     if (cellIndex < 0) break;
                     cell = row.getCell(cellIndex);
@@ -150,8 +156,6 @@ public class DefaultExportHandler implements ExcelHandler {
                 if (excelTemplate.sheetTitle() == null || !sheetTitle.equals(excelTemplate.sheetTitle())) continue;
                 Integer currentIndex = hasDealIndexMap.get(excelTemplate.sheetTitle()) == null ? excelTemplate.beginWriteRowIndex() : hasDealIndexMap.get(excelTemplate.sheetTitle());
                 sheet = workbook.getSheet(excelTemplate.sheetTitle());
-
-                sheet.shiftRows(currentIndex, sheet.getLastRowNum(), 1, true, false);
                 row = sheet.createRow(currentIndex);
                 row.setHeight((short) (20 * 18));
                 for (Map.Entry<Integer, CellInfo> entry : excelTemplate.orderCellMap().entrySet()) {
@@ -167,17 +171,17 @@ public class DefaultExportHandler implements ExcelHandler {
                         cell.setCellValue(cellValue);
                     }
                     if (cellInfo.styles() == null) continue;
-                    for (ExcelCellStyle excelCellStyle : cellInfo.styles()) {
-                        if (excelCellStyle.equals(ExcelCellStyle.BORDER_ALL)) {
-                            style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
-                            style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
-                            style.setBorderTop(CellStyle.BORDER_THIN);//上边框
-                            style.setBorderRight(CellStyle.BORDER_THIN);//右边框
-                        }
-                        if (excelCellStyle.equals(ExcelCellStyle.ALIGN_CENTER)) {
-                            style.setAlignment(CellStyle.ALIGN_CENTER);
-                        }
-                    }
+//                    for (ExcelCellStyle excelCellStyle : cellInfo.styles()) {
+//                        if (excelCellStyle.equals(ExcelCellStyle.BORDER_ALL)) {
+//                            style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
+//                            style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
+//                            style.setBorderTop(CellStyle.BORDER_THIN);//上边框
+//                            style.setBorderRight(CellStyle.BORDER_THIN);//右边框
+//                        }
+//                        if (excelCellStyle.equals(ExcelCellStyle.ALIGN_CENTER)) {
+//                            style.setAlignment(CellStyle.ALIGN_CENTER);
+//                        }
+//                    }
                     cell.setCellStyle(style);
                 }
                 hasDealIndexMap.put(excelTemplate.sheetTitle(), ++currentIndex);

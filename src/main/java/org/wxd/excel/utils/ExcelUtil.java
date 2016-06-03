@@ -46,6 +46,35 @@ public class ExcelUtil {
         }
     }
 
+    public static Workbook buildWorkbookFromEntityOfFileWithSXSSFWorkbook(Object src,List<String> sheetTiltles, File excelTemplateFile,int flushNum,ExcelHandler... handlers) {
+        try {
+            Workbook workbook = ExportFatory.buildWorkbookOfTemplateWithSXSSFWorkbook(excelTemplateFile, flushNum);
+            ExportFatory.buildExecutor().registerAll(Arrays.asList(handlers)).handler(
+                    workbook,
+                    ExportFatory.buildExcelContent(src),
+                    sheetTiltles
+            );
+            return workbook;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public static Workbook buildWorkbookFromEntityOfFileWithSXSSFWorkbook(Object src,List<String> sheetTiltles, File excelTemplateFile,ExcelHandler... handlers) {
+        try {
+            Workbook workbook = ExportFatory.buildWorkbookOfTemplateWithSXSSFWorkbook(excelTemplateFile);
+            ExportFatory.buildExecutor().registerAll(Arrays.asList(handlers)).handler(
+                    workbook,
+                    ExportFatory.buildExcelContent(src),
+                    sheetTiltles
+            );
+            return workbook;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     /**
      * TODO 有待优化
      * 获取但单元格值

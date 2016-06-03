@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <google.guava.version>18.0</google.guava.version>
         <apache.stringutils.version>3.0</apache.stringutils.version>
-        <poi.version>3.14</poi.version>
+        <poi.version>3.9</poi.version>
         <junit.version>4.12</junit.version>
     </properties>
     <dependencies>
