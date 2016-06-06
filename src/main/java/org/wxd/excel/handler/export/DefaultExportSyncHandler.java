@@ -164,9 +164,17 @@ public class DefaultExportSyncHandler implements ExcelHandler {
                     if (cellInfo.order() == -1) continue;
                     cell = row.createCell(cellInfo.order());
                     if (cellInfo.fieldType().toString().equals("class java.math.BigDecimal")) {
-                        cell.setCellValue(new BigDecimal(cellValue.equals("") ? "0" : cellValue).doubleValue());
-                    } else if (cellInfo.fieldType().toString().equals("class java.lang.Integer")) {
-                        cell.setCellValue(new BigDecimal(cellValue.equals("") ? "0" : cellValue).intValue());
+                        if(cellValue.equals("")){
+                            cell.setCellValue("");
+                        }else{
+                            cell.setCellValue(new BigDecimal(cellValue).doubleValue());
+                        }
+                    }else if(cellInfo.fieldType().toString().equals("class java.lang.Integer")){
+                        if(cellValue.equals("")){
+                            cell.setCellValue("");
+                        }else{
+                            cell.setCellValue(new BigDecimal(cellValue).intValue());
+                        }
                     } else {
                         cell.setCellValue(cellValue);
                     }
