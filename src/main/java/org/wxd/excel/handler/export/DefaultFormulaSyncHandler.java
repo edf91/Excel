@@ -9,10 +9,12 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.wxd.excel.annotation.ExcelFormula;
 import org.wxd.excel.bean.ExcelContent;
 import org.wxd.excel.bean.ExcelTemplateFormula;
+import org.wxd.excel.exception.ExcelException;
 import org.wxd.excel.handler.inport.ExcelHandler;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.*;
 
 /**
  * @Description: 异步处理公式
@@ -33,52 +35,45 @@ public class DefaultFormulaSyncHandler implements ExcelHandler {
             if(formulaMap.get(formula.sheetTitle()) != null) continue;
             formulaMap.put(formula.sheetTitle(),formula.formulas());
         }
-        Sheet sheet = null;
-        Row row = null;
-        Cell cell = null;
-        List<ExportHandlerRunnable> runnables = Lists.newArrayList();
+
+        ExecutorService exec = Executors.newCachedThreadPool();
+        List<Future<Boolean>> futures = Lists.newArrayList();
+
 
         for (Map.Entry<String, List<ExcelFormula>> titleFormula : formulaMap.entrySet()) {
             String title = titleFormula.getKey();
-//            System.out.println("正在处理title：" + title);
             ExportHandlerRunnable exportHandlerRunnable = new ExportHandlerRunnable();
             exportHandlerRunnable.title = title;
             exportHandlerRunnable.workbook = workbook;
             exportHandlerRunnable.titleFormula = titleFormula;
-            runnables.add(exportHandlerRunnable);
-            new Thread(exportHandlerRunnable).start();
+            futures.add(exec.submit(exportHandlerRunnable));
         }
 
         /**
          * 主线程判断子线程是否处理完毕
          * 主线程等待300ms再次判断
          */
-        while (true) {
-            boolean isDone = true;
-            for (ExportHandlerRunnable runnable : runnables) {
-                if (!runnable.hasFinish) {
-                    isDone = false;
-                    break;
+        for (Future<Boolean> future : futures) {
+            try {
+                if(future.isDone()){
+                    System.out.println("formula is done.");
+                    exec.shutdown();
                 }
-            }
-            if (isDone) {
-                break;
-            } else {
-                try {
-                    Thread.sleep(300);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                if(future.get() == null || !future.get()){
+                    System.out.println("formula is faile.");
+                    exec.shutdown();
                 }
+            }catch (Exception e){
+                throw new ExcelException(e.getMessage(),e);
             }
         }
 
         return workbook;
     }
-    public static class ExportHandlerRunnable implements Runnable {
+    public static class ExportHandlerRunnable implements Callable<Boolean> {
         Map.Entry<String, List<ExcelFormula>> titleFormula;
         String title;
         Workbook workbook;
-        boolean hasFinish = false;
 
         private void dealFormula(){
             Sheet sheet;
@@ -91,7 +86,6 @@ public class DefaultFormulaSyncHandler implements ExcelHandler {
                 String index = formula.index();
                 Integer rowIndex = Integer.parseInt(index.split(":")[0]);
                 Integer cellIndex = Integer.parseInt(index.split(":")[1]);
-//                System.out.println("正在处理rowIndex【cellIndex】：" + (rowIndex) + ":" + cellIndex);
 
                 row = sheet.getRow(rowIndex);
                 cell = row.getCell(cellIndex);
@@ -108,13 +102,8 @@ public class DefaultFormulaSyncHandler implements ExcelHandler {
                     if(calc.contains(",")){
                         //SUM(K${6},N${6},O${6},P${6})
                         String numStr = calc.replaceAll("\\D+", "");
-                        Integer calcRowIndex = 0;
+                        Integer calcRowIndex;
                         calcRowIndex = Integer.parseInt(numStr.substring(0, 1));
-//                        if(numStr.length() > 2){
-//                            calcRowIndex = Integer.parseInt(numStr.substring(0, 2));
-//                        }else{
-//                            calcRowIndex = Integer.parseInt(numStr.substring(0, 1));
-//                        }
                         String charNum = "${" + calcRowIndex +"}";
                         for(int start = rowIndex,len = sheet.getLastRowNum() - 1; start <= len; start++,calcRowIndex ++){
                             row = sheet.getRow(start);
@@ -174,10 +163,11 @@ public class DefaultFormulaSyncHandler implements ExcelHandler {
                 }
             }
         }
+
         @Override
-        public void run() {
-            dealFormula();
-            hasFinish = true;
+        public Boolean call() throws Exception {
+           dealFormula();
+            return Boolean.TRUE;
         }
     }
 

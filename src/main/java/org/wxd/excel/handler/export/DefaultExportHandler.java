@@ -7,10 +7,9 @@ import org.wxd.excel.bean.ExcelContent;
 import org.wxd.excel.bean.ExcelTemplate;
 import org.wxd.excel.bean.ExcelTemplateParam;
 import org.wxd.excel.handler.inport.ExcelHandler;
+import org.wxd.excel.utils.ExcelUtil;
 
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -23,73 +22,19 @@ import java.util.Map;
  * @Version 1.0
  */
 public class DefaultExportHandler implements ExcelHandler {
-    /**
-     * 获取但单元格值
-     * @param cell
-     * @return
-     */
-    @SuppressWarnings("Duplicates")
-    public Object getCellValue(Cell cell){
-        Object cellValue = null;
-        switch (cell.getCellType()) {
-            case Cell.CELL_TYPE_FORMULA:
-                try {
-                    cellValue = cell.getStringCellValue();
-                }catch (Exception e){
-                    cellValue = cell.getNumericCellValue();
-                }
-                break;
-            case Cell.CELL_TYPE_NUMERIC: // 数字,或者日期
-                try{
-                    cellValue = new BigDecimal(cell.getNumericCellValue());
-                }catch (Exception e){
-                    int format = cell.getCellStyle().getDataFormat();
-                    if (DateUtil.isCellDateFormatted(cell)) {// 处理日期格式、时间格式
-                        cellValue = cell.getDateCellValue();
-                        if(cellValue != null) cellValue = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date(cellValue.toString()));
-                    } else if (format == 58 || format == 176 || format == 184 || format == 31) {
-                        // 处理自定义日期格式：m月d日(通过判断单元格的格式id解决，id的值是58)
-                        cellValue = DateUtil.getJavaDate(cell.getNumericCellValue());
-                        if(cellValue != null) cellValue = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date(cellValue.toString()));
-                    } else {
-                        cellValue = cell.getNumericCellValue();
-                    }
-                }
-                break;
-            case Cell.CELL_TYPE_STRING: // 字符串
-                cellValue = cell.getStringCellValue();
-                break;
-            case Cell.CELL_TYPE_BOOLEAN: // Boolean
-                cellValue = cell.getBooleanCellValue();
-                break;
-            case Cell.CELL_TYPE_BLANK: // 空值
-                cellValue = "";
-                break;
-            case Cell.CELL_TYPE_ERROR: // 故障
-                cellValue = "非法字符";
-                break;
-            default:
-                cellValue = "未知类型";
-                break;
-        }
-        return cellValue;
-    }
-    @SuppressWarnings("Duplicates")
+
+    @SuppressWarnings({"Duplicates", "unchecked"})
     public Workbook handlerWorkbook(Workbook workbook, ExcelContent content,Object custom) {
 
         List<String> sheetTitles = (List<String>) custom;
         List<ExcelTemplate> excelTemplates = content.templates();
         List<ExcelTemplateParam> excelTemplateParams = content.params();
 
-        Sheet sheet = null;
-        Row row = null;
-        Cell cell = null;
+        Sheet sheet;
+        Row row;
+        Cell cell;
         CellStyle style = workbook.createCellStyle();
-        style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
-        style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
-        style.setBorderTop(CellStyle.BORDER_THIN);//上边框
-        style.setBorderRight(CellStyle.BORDER_THIN);//右边框
-        style.setAlignment(CellStyle.ALIGN_CENTER);
+        ExcelUtil.buildDefaultStyle(style);
 
         Map<String,Boolean> isNeedToRemoveSheet = Maps.newHashMap();
         /*移除不必要的sheet*/
@@ -121,11 +66,11 @@ public class DefaultExportHandler implements ExcelHandler {
                     if (cellIndex < 0) break;
                     cell = row.getCell(cellIndex);
                     if (cell == null) continue;
-                    Object objValue = getCellValue(cell);
+                    Object objValue = ExcelUtil.getCellValue(cell);
                     String value = objValue == null ? "" : objValue.toString();
                     if (!value.contains("${")) continue;
                     int valueLength = value.length();
-                    int subLength = 0;
+                    int subLength;
                     for (int i = value.indexOf("$"); i < valueLength; i++) {
                         if (value.charAt(i) != '$') continue;
                         int begIndex = i;
@@ -213,5 +158,7 @@ public class DefaultExportHandler implements ExcelHandler {
 
         return workbook;
     }
+
+
 
 }

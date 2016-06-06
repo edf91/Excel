@@ -36,7 +36,7 @@ public final class ExcelRepository {
         return new Builder();
     }
 
-    public  static class Builder {
+    public static class Builder {
         Object target;/*目标对象*/
         ExcelSheet excelSheet;/*sheet注解*/
         Class targetObjClass;/*目标类字节码*/
@@ -113,4 +113,14 @@ public final class ExcelRepository {
         return fields;
     }
 
+    @Override
+    public String toString() {
+        return "ExcelRepository{" +
+                "target=" + target +
+                ", excelSheet=" + excelSheet +
+                ", targetObjClass=" + targetObjClass +
+                ", targetClass=" + targetClass +
+                ", fields=" + fields +
+                '}';
+    }
 }

@@ -3,6 +3,8 @@ package org.wxd.excel.bean;
 
 import org.wxd.excel.annotation.ExcelCellStyle;
 
+import java.util.Arrays;
+
 /**
  * @Description: 存放单元格的信息
  * @Author : wangxd
@@ -73,4 +75,14 @@ public class CellInfo {
         return fieldType;
     }
 
+
+    @Override
+    public String toString() {
+        return "CellInfo{" +
+                "value=" + value +
+                ", fieldType=" + fieldType +
+                ", order=" + order +
+                ", styles=" + Arrays.toString(styles) +
+                '}';
+    }
 }

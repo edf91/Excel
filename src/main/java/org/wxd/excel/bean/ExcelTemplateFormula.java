@@ -93,4 +93,12 @@ public class ExcelTemplateFormula {
     public List<ExcelFormula> formulas() {
         return formulas;
     }
+
+    @Override
+    public String toString() {
+        return "ExcelTemplateFormula{" +
+                "sheetTitle='" + sheetTitle + '\'' +
+                ", formulas=" + formulas +
+                '}';
+    }
 }

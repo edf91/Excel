@@ -10,7 +10,6 @@ import org.wxd.excel.exception.ExcelException;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -44,9 +43,7 @@ public class DefaultEntityHandler implements EntityHandler{
                 ExcelSheet excelSheet = (ExcelSheet) entityClass.getAnnotation(ExcelSheet.class);
                 sheetTitleEntityClassMap.put(excelSheet.name(),entityClass);
             }
-            Sheet sheet = null;
-            Row row = null;
-            Cell cell = null;
+            Sheet sheet;
             for (Map.Entry<String, Class> sheetTitleClassEntry : sheetTitleEntityClassMap.entrySet()) {
                 String sheetTitle = sheetTitleClassEntry.getKey();
                 Class clazz = sheetTitleClassEntry.getValue();
@@ -82,7 +79,7 @@ public class DefaultEntityHandler implements EntityHandler{
                 if(readIndex.length != 2) continue;
                 cell = sheet.getRow(Integer.parseInt(readIndex[0])).getCell(Integer.parseInt(readIndex[1]));
             }
-            Object cellValue = null;
+            Object cellValue;
             if(cell == null) continue;
             switch (cell.getCellType()) {
                 case Cell.CELL_TYPE_NUMERIC: // 数字,或者日期
@@ -126,11 +123,5 @@ public class DefaultEntityHandler implements EntityHandler{
                 field.set(entity,value.equals("") ? null : new BigDecimal(value));
             }
         }
-    }
-
-    public static void main(String[] args) throws ParseException {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-        Date date = new Date("Fri Jan 22 00:00:00 CST 2016");
-        System.out.println(format.format(date));
     }
 }

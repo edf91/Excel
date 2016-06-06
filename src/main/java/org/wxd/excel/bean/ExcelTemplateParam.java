@@ -89,4 +89,12 @@ public class ExcelTemplateParam {
     public Map<String, Object> params() {
         return params;
     }
+
+    @Override
+    public String toString() {
+        return "ExcelTemplateParam{" +
+                "sheetTitle='" + sheetTitle + '\'' +
+                ", params=" + params +
+                '}';
+    }
 }

@@ -20,6 +20,6 @@ public interface EntityHandler {
      * @param custom 自定义对象，满足其他需求
      * @return
      */
-    public Map<String,List<Object>> handlerExcelToEntity(Workbook workbook, Map<String, List<Object>> result, Object custom);
+    Map<String,List<Object>> handlerExcelToEntity(Workbook workbook, Map<String, List<Object>> result, Object custom);
 
 }

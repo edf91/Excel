@@ -37,7 +37,7 @@ public class ExportFatory {
 
     public static Workbook buildWorkbookOfTemplateWithSXSSFWorkbook(File excelFile) {
         try {
-            return new SXSSFWorkbook((XSSFWorkbook)WorkbookFactory.create(excelFile));
+            return ExportFatory.buildWorkbookOfTemplateWithSXSSFWorkbook(excelFile,0);
         } catch (Exception e) {
             throw new ExcelException(e.getMessage(), e);
         }
@@ -45,7 +45,7 @@ public class ExportFatory {
 
     public static Workbook buildWorkbookOfTemplateWithSXSSFWorkbook(File excelFile,int flushNum) {
         try {
-            return new SXSSFWorkbook((XSSFWorkbook)WorkbookFactory.create(excelFile),flushNum);
+            return flushNum == 0 ? new SXSSFWorkbook((XSSFWorkbook)WorkbookFactory.create(excelFile)) : new SXSSFWorkbook((XSSFWorkbook)WorkbookFactory.create(excelFile),flushNum);
         } catch (Exception e) {
             throw new ExcelException(e.getMessage(), e);
         }

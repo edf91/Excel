@@ -52,7 +52,6 @@ public class ExcelExportTest {
                     new DefaultExportSyncHandler()
             );
             workbook.write(out);
-            workbook.close();
             closer.close();
         }catch (Exception e){
             e.printStackTrace();

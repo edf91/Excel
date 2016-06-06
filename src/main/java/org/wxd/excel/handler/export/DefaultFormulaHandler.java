@@ -33,9 +33,9 @@ public class DefaultFormulaHandler implements ExcelHandler {
             if(formulaMap.get(formula.sheetTitle()) != null) continue;
             formulaMap.put(formula.sheetTitle(),formula.formulas());
         }
-        Sheet sheet = null;
-        Row row = null;
-        Cell cell = null;
+        Sheet sheet;
+        Row row;
+        Cell cell;
         for (Map.Entry<String, List<ExcelFormula>> titleFormula : formulaMap.entrySet()) {
             String title = titleFormula.getKey();
             System.out.println("正在处理title：" + title);
@@ -62,13 +62,8 @@ public class DefaultFormulaHandler implements ExcelHandler {
                 	if(calc.contains(",")){
                 		//SUM(K${6},N${6},O${6},P${6})
                         String numStr = calc.replaceAll("\\D+", "");
-                        Integer calcRowIndex = 0;
+                        Integer calcRowIndex;
                         calcRowIndex = Integer.parseInt(numStr.substring(0, 1));
-//                        if(numStr.length() > 2){
-//                            calcRowIndex = Integer.parseInt(numStr.substring(0, 2));
-//                        }else{
-//                            calcRowIndex = Integer.parseInt(numStr.substring(0, 1));
-//                        }
                         String charNum = "${" + calcRowIndex +"}";
                         for(int start = rowIndex,len = sheet.getLastRowNum() - 1; start <= len; start++,calcRowIndex ++){
                             row = sheet.getRow(start);

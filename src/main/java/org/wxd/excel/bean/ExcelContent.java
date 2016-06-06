@@ -63,4 +63,13 @@ public class ExcelContent{
     public List<ExcelTemplateParam> params() {
         return params;
     }
+
+    @Override
+    public String toString() {
+        return "ExcelContent{" +
+                "templates=" + templates +
+                ", params=" + params +
+                ", formulas=" + formulas +
+                '}';
+    }
 }

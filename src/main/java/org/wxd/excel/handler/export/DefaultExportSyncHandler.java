@@ -14,6 +14,7 @@ import org.wxd.excel.utils.ExcelUtil;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.*;
 
 /**
  * 多线程处理
@@ -21,12 +22,16 @@ import java.util.Map;
  */
 public class DefaultExportSyncHandler implements ExcelHandler {
 
-    @SuppressWarnings("Duplicates")
+    @SuppressWarnings({"Duplicates", "unchecked", "SpellCheckingInspection"})
     public Workbook handlerWorkbook(Workbook workbook, ExcelContent content, Object custom) {
 
         List<String> sheetTitles = (List<String>) custom;
         List<ExcelTemplate> excelTemplates = content.templates();
         List<ExcelTemplateParam> excelTemplateParams = content.params();
+
+        CellStyle style = workbook.createCellStyle();
+        ExcelUtil.buildDefaultStyle(style);
+
 
         Map<String, Boolean> isNeedToRemoveSheet = Maps.newHashMap();
         /*移除不必要的sheet*/
@@ -40,16 +45,14 @@ public class DefaultExportSyncHandler implements ExcelHandler {
             }
             isNeedToRemoveSheet.put(sheetName, Boolean.TRUE);
         }
-        CellStyle style = workbook.createCellStyle();
-        style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
-        style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
-        style.setBorderTop(CellStyle.BORDER_THIN);//上边框
-        style.setBorderRight(CellStyle.BORDER_THIN);//右边框
-        style.setAlignment(CellStyle.ALIGN_CENTER);
+
+
+
         /**
          * 采用多线程进行处理,一个sheet一条线程
          */
-        List<ExportHandlerRunnable> runnables = Lists.newArrayList();
+        ExecutorService exec = Executors.newCachedThreadPool();
+        List<Future<Boolean>> futures = Lists.newArrayList();
         for (String sheetTitle : sheetTitles) {
             ExportHandlerRunnable exportHandlerRunnable = new ExportHandlerRunnable();
             exportHandlerRunnable.excelTemplateParams = excelTemplateParams;
@@ -58,29 +61,23 @@ public class DefaultExportSyncHandler implements ExcelHandler {
             exportHandlerRunnable.sheetTitle = sheetTitle;
             exportHandlerRunnable.isNeedToRemoveSheet = isNeedToRemoveSheet;
             exportHandlerRunnable.style = style;
-            runnables.add(exportHandlerRunnable);
-            new Thread(exportHandlerRunnable).start();
+            futures.add(exec.submit(exportHandlerRunnable));
         }
         /**
          * 主线程判断子线程是否处理完毕
          * 主线程等待300ms再次判断
          */
-        while (true) {
-            boolean isDone = true;
-            for (ExportHandlerRunnable runnable : runnables) {
-                if (!runnable.hasFinish) {
-                    isDone = false;
-                    break;
+        for (Future<Boolean> future : futures) {
+            try {
+                if(future.get() == null || !future.get()){
+                    System.out.println("faile......");
+                    exec.shutdown();
                 }
-            }
-            if (isDone) {
-                break;
-            } else {
-                try {
-                    Thread.sleep(300);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                if (!future.isDone()) System.out.println("export not done.");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
         }
 
@@ -90,7 +87,7 @@ public class DefaultExportSyncHandler implements ExcelHandler {
     /**
      * 处理线程类
      */
-    public static class ExportHandlerRunnable implements Runnable {
+    public static class ExportHandlerRunnable implements Callable<Boolean>{
 
         private List<ExcelTemplate> excelTemplates;
         private List<ExcelTemplateParam> excelTemplateParams;
@@ -101,7 +98,6 @@ public class DefaultExportSyncHandler implements ExcelHandler {
         private Row row;
         private Cell cell;
         private CellStyle style;
-        private boolean hasFinish = false;
 
         @SuppressWarnings("Duplicates")
         private void dealParam(){
@@ -124,7 +120,7 @@ public class DefaultExportSyncHandler implements ExcelHandler {
                         String value = objValue == null ? "" : objValue.toString();
                         if (!value.contains("${")) continue;
                         int valueLength = value.length();
-                        int subLength = 0;
+                        int subLength;
                         for (int i = value.indexOf("$"); i < valueLength; i++) {
                             if (value.charAt(i) != '$') continue;
                             int begIndex = i;
@@ -179,25 +175,14 @@ public class DefaultExportSyncHandler implements ExcelHandler {
                         cell.setCellValue(cellValue);
                     }
                     if (cellInfo.styles() == null) continue;
-//                    for (ExcelCellStyle excelCellStyle : cellInfo.styles()) {
-//                        if (excelCellStyle.equals(ExcelCellStyle.BORDER_ALL)) {
-//                            style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
-//                            style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
-//                            style.setBorderTop(CellStyle.BORDER_THIN);//上边框
-//                            style.setBorderRight(CellStyle.BORDER_THIN);//右边框
-//                        }
-//                        if (excelCellStyle.equals(ExcelCellStyle.ALIGN_CENTER)) {
-//                            style.setAlignment(CellStyle.ALIGN_CENTER);
-//                        }
-//                    }
                     cell.setCellStyle(style);
                 }
                 hasDealIndexMap.put(excelTemplate.sheetTitle(), ++currentIndex);
             }
         }
 
-        @SuppressWarnings("Duplicates")
-        public void run() {
+        @Override
+        public Boolean call() throws Exception {
             Assert.notNull(excelTemplates,"excelTemplates cant be null");
             Assert.notNull(excelTemplateParams,"excelTemplateParams cant be null");
             Assert.notNull(isNeedToRemoveSheet,"isNeedToRemoveSheet cant be null");
@@ -208,7 +193,7 @@ public class DefaultExportSyncHandler implements ExcelHandler {
             dealParam();
             /*处理内容*/
             dealContent();
-            hasFinish = true;
+            return Boolean.TRUE;
         }
     }
 

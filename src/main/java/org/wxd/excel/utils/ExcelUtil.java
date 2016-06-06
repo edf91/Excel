@@ -1,8 +1,10 @@
 package org.wxd.excel.utils;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.wxd.excel.exception.ExcelException;
 import org.wxd.excel.handler.inport.ExcelHandler;
 
 import java.io.File;
@@ -46,9 +48,21 @@ public class ExcelUtil {
         }
     }
 
+    /**
+     * 处理大数据导出接口，采用SXSSFWorkbook处理
+     * @param src
+     * @param sheetTiltles
+     * @param excelTemplateFile
+     * @param flushNum 缓存单元格数量
+     * @param handlers
+     * @return
+     */
     public static Workbook buildWorkbookFromEntityOfFileWithSXSSFWorkbook(Object src,List<String> sheetTiltles, File excelTemplateFile,int flushNum,ExcelHandler... handlers) {
         try {
-            Workbook workbook = ExportFatory.buildWorkbookOfTemplateWithSXSSFWorkbook(excelTemplateFile, flushNum);
+            Workbook workbook = flushNum == 0 ?
+                    ExportFatory.buildWorkbookOfTemplateWithSXSSFWorkbook(excelTemplateFile)
+                    :
+                    ExportFatory.buildWorkbookOfTemplateWithSXSSFWorkbook(excelTemplateFile, flushNum);
             ExportFatory.buildExecutor().registerAll(Arrays.asList(handlers)).handler(
                     workbook,
                     ExportFatory.buildExcelContent(src),
@@ -60,18 +74,21 @@ public class ExcelUtil {
             return null;
         }
     }
+
+    /**
+     * 处理大数据导出接口，采用SXSSFWorkbook处理，采用默认处理缓存数
+     * @param src
+     * @param sheetTiltles
+     * @param excelTemplateFile
+     * @param handlers
+     * @return
+     */
     public static Workbook buildWorkbookFromEntityOfFileWithSXSSFWorkbook(Object src,List<String> sheetTiltles, File excelTemplateFile,ExcelHandler... handlers) {
         try {
-            Workbook workbook = ExportFatory.buildWorkbookOfTemplateWithSXSSFWorkbook(excelTemplateFile);
-            ExportFatory.buildExecutor().registerAll(Arrays.asList(handlers)).handler(
-                    workbook,
-                    ExportFatory.buildExcelContent(src),
-                    sheetTiltles
-            );
-            return workbook;
+            return ExcelUtil.buildWorkbookFromEntityOfFileWithSXSSFWorkbook(src,sheetTiltles,excelTemplateFile,0,handlers);
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            throw new ExcelException(e.getMessage(),e);
         }
     }
 
@@ -126,5 +143,17 @@ public class ExcelUtil {
                 break;
         }
         return cellValue;
+    }
+
+    /**
+     * 构建默认样式，边框+居中
+     * @param style
+     */
+    public static void buildDefaultStyle(CellStyle style) {
+        style.setBorderBottom(CellStyle.BORDER_THIN); //下边框
+        style.setBorderLeft(CellStyle.BORDER_THIN);//左边框
+        style.setBorderTop(CellStyle.BORDER_THIN);//上边框
+        style.setBorderRight(CellStyle.BORDER_THIN);//右边框
+        style.setAlignment(CellStyle.ALIGN_CENTER);
     }
 }
