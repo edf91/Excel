@@ -67,6 +67,9 @@ public class DefaultExportSyncHandler implements ExcelHandler {
          * 主线程判断子线程是否处理完毕
          * 主线程等待300ms再次判断
          */
+
+
+
         for (Future<Boolean> future : futures) {
             try {
                 if(future.get() == null || !future.get()){
