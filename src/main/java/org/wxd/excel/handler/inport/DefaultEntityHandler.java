@@ -33,7 +33,7 @@ public class DefaultEntityHandler implements EntityHandler{
         this.entityClasses.addAll(clazzes);
         return this;
     }
-    @Override
+
     public Map<String, List<Object>> handlerExcelToEntity(Workbook workbook, Map<String,List<Object>> result, Object custom) {
         try {
             Map<String,Class> sheetTitleEntityClassMap = Maps.newConcurrentMap();/*存放标题对应的对象*/
@@ -67,7 +67,7 @@ public class DefaultEntityHandler implements EntityHandler{
         }catch (Exception e){throw new ExcelException(e.getMessage(),e);}
     }
 
-    private void reflectSetFieldValue(Field[] fields,Sheet sheet,Object entity,int index) throws IllegalAccessException {
+    private void reflectSetFieldValue(Field[] fields, Sheet sheet, Object entity, int index) throws IllegalAccessException {
         Cell cell = null;
         Row row = sheet.getRow(index);
         for (Field field : fields) {
